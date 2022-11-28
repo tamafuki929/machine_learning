@@ -41,10 +41,10 @@ This repository is intended for machine learning implementations (for self-study
 ・
 
 
-[^1]: 深層学習界の大前提Transformerの論文解説！
-Trasformerの全体像が詳しく分かりやすく説明されている。
+[^1]: 深層学習界の大前提Transformerの論文解説！  
+Trasformerの全体像が詳しく分かりやすく説明されている。  
 https://qiita.com/omiita/items/07e69aef6c156d23c538#151-%E3%83%87%E3%83%BC%E3%82%BF%E3%82%BB%E3%83%83%E3%83%88%E3%81%A8%E3%83%90%E3%83%83%E3%83%81
 
-[^2]: Attention is all you needの解説
-Attentionとは何かを中心に説明されている。tranformer自体の解説は上記文献を参考にした方が良さそう。
+[^2]: Attention is all you needの解説  
+Attentionとは何かを中心に説明されている。tranformer自体の解説は上記文献を参考にした方が良さそう。  
 https://www.acceluniverse.com/blog/developers/2019/08/attention.html
