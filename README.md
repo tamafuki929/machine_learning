@@ -1,33 +1,50 @@
-# What is this repository
+# 1. What is this repository
 This repository is intended for machine learning implementations (for self-study) and trial development tools.  
 
-# Item to be implmented
-### ML models for tabular data analysys
+# 2. Item to be implmented
+### 2-1. Supervised Learning
+#### Tabular data analysys
 ・Liear models  
 ・Gaussian process  
 ・SVM  
 ・GBDTs  
 ・Neural Net
-### ML models for natural language processing (NLP)
+
+#### Natural language processing (NLP)
 ・RNN  
-・
-### ML models for computer vision
+・Transformer[^1] [^2]
+
+#### Computer vision
 ・CNN  
 ・
-### Visulization for ML
+
+### 2-2. Reinforcement Learning
+
+### 2-3. Unsupervised Learning
+
+### 2-4. Visulization
 ・TSNE  
 ・Shap  
 
-# Tools to be used
+# 3. Tools to be used
 
-### Tools for testing
+### 3-1. Testing
 ・pytest  
 ・
 
-### Tools for develop
+### 3-2. Developing
 ・git ~  
 ・cython  
 ・
-### Tools for making environment
+### 3-3. Environment
 ・docker  
 ・
+
+
+[^1]: 深層学習界の大前提Transformerの論文解説！
+Trasformerの全体像が詳しく分かりやすく説明されている。
+https://qiita.com/omiita/items/07e69aef6c156d23c538#151-%E3%83%87%E3%83%BC%E3%82%BF%E3%82%BB%E3%83%83%E3%83%88%E3%81%A8%E3%83%90%E3%83%83%E3%83%81
+
+[^2]: Attention is all you needの解説
+Attentionとは何かを中心に説明されている。tranformer自体の解説は上記文献を参考にした方が良さそう。
+https://www.acceluniverse.com/blog/developers/2019/08/attention.html
