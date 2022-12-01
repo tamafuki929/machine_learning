@@ -12,7 +12,7 @@ This repository is intended for machine learning implementations (for self-study
 
 #### Natural language processing (NLP)
 ・RNN  
-・Transformer[^1] [^2]
+・Transformer[^1] [^2] [^3] [^4]
 
 #### Computer vision
 ・CNN  
@@ -48,3 +48,9 @@ https://qiita.com/omiita/items/07e69aef6c156d23c538#151-%E3%83%87%E3%83%BC%E3%82
 [^2]: Attention is all you needの解説  
 Attentionとは何かを中心に説明されている。tranformer自体の解説は上記文献を参考にした方が良さそう。  
 https://www.acceluniverse.com/blog/developers/2019/08/attention.html
+
+[^3]: RNNからTransformerまでの歴史を辿る ～DNNを使ったNLPを浅く広く勉強～
+https://aru47.hatenablog.com/entry/2020/08/18/175711
+
+[^4]: Transformerを実装する
+https://qiita.com/gensal/items/e1c4a34dbfd0d7449099

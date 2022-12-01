@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score, accuracy_score, confusion_matrix
 
 X, y = load_breast_cancer(return_X_y=True)
 X_train = X[:50]
-y_train = y[:50]
+y_train = y[:50]  
 X_test = X[50:]
 y_test = y[50:]
 
