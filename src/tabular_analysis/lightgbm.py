@@ -116,7 +116,7 @@ def manual_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
 
 
 # %% baseline to use cv func. in lgb library
-def lgb_cv_lgvcls(X, y, params = {}, random_state = 42):
+def lgb_cv_lgbcls(X, y, params = {}, random_state = 42):
     _params = {
         "objective"    : "binary", # or multiclass, 
         # "num_class"  : 3,  
@@ -132,7 +132,7 @@ def lgb_cv_lgvcls(X, y, params = {}, random_state = 42):
     
     cv_result = lgb.cv(
         _params, cv_data, 
-        num_boost_rounds = 1000, 
+        num_boost_round = 1000, 
         folds = cv, 
         callbacks = [
             lgb.early_stopping(stopping_rounds=10, verbose=True), 
