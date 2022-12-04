@@ -7,7 +7,24 @@ RNNやその発展系であるLSTMは, 入力ベクトルの時系列性を認�
 seq2seqモデルは, 一般的にエンコーダーとデコーダーによって構成される. エンコーダーは入力を抽象化する機能を持ち, 自然言語処理タスクにおいては, 自然言語をより抽象的な文脈情報(言語間で共通する意味特徴量)に変換する役割を持つ. デコーダーは特徴量の具体化を行う機能を持ち, 抽象的な意味情報を特的のドメインや具体例へと変換する役割を果たす(自然言語処理では, 言語間で共通する意味情報から各国の言語への変換など). 
 具体的な課題点としては, エンコーダーによって生成されるconetxt vectorが固定長であり, context vectorが長くなるに応じて, 計算資源の増大, 計算効率の悪化, 短期的情報の軽視, が発生する点が挙げられる. 
 
-* [x] Transformer
+* [x] Transformer[^2][^3][^4][^5][^6]
 TransformerはAttentionと呼ばれる新たな時系列を考慮した特徴量抽出手法によって, seq2seqモデルの学習効率を100倍以上に向上した. 計算効率の向上はより大規模なデータを用いた学習を可能とし, 結果的に飛躍的に精度が向上している. 
 
 [^1]: https://aru47.hatenablog.com/entry/2020/08/18/175711
+
+[^2]: query, key, valueが分かりやすく解説されている.
+https://omathin.com/what-is-attention-1/
+
+[^3]: 深層学習界の大前提Transformerの論文解説！  
+Trasformerの全体像が詳しく分かりやすく説明されている。  
+https://qiita.com/omiita/items/07e69aef6c156d23c538#151-%E3%83%87%E3%83%BC%E3%82%BF%E3%82%BB%E3%83%83%E3%83%88%E3%81%A8%E3%83%90%E3%83%83%E3%83%81
+
+[^4]: Attention is all you needの解説  
+Attentionとは何かを中心に説明されている。tranformer自体の解説は上記文献を参考にした方が良さそう。  
+https://www.acceluniverse.com/blog/developers/2019/08/attention.html
+
+[^5]: RNNからTransformerまでの歴史を辿る ～DNNを使ったNLPを浅く広く勉強～
+https://aru47.hatenablog.com/entry/2020/08/18/175711
+
+[^6]: Transformerを実装する
+https://qiita.com/gensal/items/e1c4a34dbfd0d7449099
