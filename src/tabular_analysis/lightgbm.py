@@ -11,29 +11,30 @@ import optuna
 
 # %% baseline to use sllearn or manual cv
 def manual_cv_lgbreg(X, y, cv, params = {}, random_state = 42):
-    params = {
-        "objective"    : "binary", # or multiclass, 
-        # "num_class"  : 3,  
+    _params = {
+        "objective"    : "regression",  
         "boosting_type": "gbdt", 
-        "metric"       : "auc", # logloss, multi_logloss 
+        "metric"       : "rmse", 
         "random_state" : random_state, 
         "verbose"      : -1
-    }.update(params)
-    verbose_eval = 200
+    }
+    _params.update(params)
     
     scores = []
     models = []
-    for i, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
+    for _, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
         dtrain = lgb.Dataset(X[train_id], label = y[train_id])
-        dvalid = lgb.Dataset(X[val_id]  , label = y[val_id]  )
+        dvalid = lgb.Dataset(X[val_id]  , label = y[val_id], free_raw_data = False)
         
         # if there is no improvement in dtrain or dvalid, stop learning
         model = lgb.train(
-                params, 
-                dtrain, 
+                _params, dtrain, 
                 valid_sets = [dtrain, dvalid], 
                 num_boost_rounds = 1000, 
-                verbose_eval = verbose_eval
+                callbacks=[
+                    lgb.early_stopping(stopping_rounds=10, verbose=True), 
+                    lgb.log_evaluation(period=100)
+                ]
         )
         
         y_pred = model.predict(dvalid.get_data())
@@ -58,7 +59,6 @@ def lgb_cv_lgvreg(X, y, params = {}, random_state = 42):
         "random_state" : random_state, 
         "verbose"      : -1
     }.update(params)
-    verbose_eval = 0
     
     cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
     cv_data = lgb.Dataset(X, label = y)
@@ -66,76 +66,80 @@ def lgb_cv_lgvreg(X, y, params = {}, random_state = 42):
     cv_result = lgb.cv(
         params, cv_data, 
         num_boost_rounds = 1000, 
-        early_stopping_rounds = 10, 
-        verbose_eval = verbose_eval, 
+        callbacks = [
+                    lgb.early_stopping(stopping_rounds=10, verbose=True), 
+                    lgb.log_evaluation(period=100)
+        ], 
         folds = cv
     )
     print(f'RMSE mean = {cv_result["rmse-mean"][-1]}')
     return cv_result
 
-    
+
 # %% baseline to use sllearn or manual cv
 def manual_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
-    params = {
-        "objective"    : "regression", 
+    _params = {
+        "objective"    : "binary", # or multiclass, 
+        # "num_class"  : 3, 
         "boosting_type": "gbdt", 
-        "metric"       : "rmse", 
+        "metrics"      : "binary_logloss", # multi_logloss
         "random_state" : random_state, 
         "verbose"      : -1
-    }.update(params)
-    verbose_eval = 200
+    }
+    _params.update(params)
     
     scores = []
     models = []
-    for i, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
+    for _, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
         dtrain = lgb.Dataset(X[train_id], label = y[train_id])
-        dvalid = lgb.Dataset(X[val_id]  , label = y[val_id]  )
+        dvalid = lgb.Dataset(X[val_id]  , label = y[val_id], free_raw_data = False)
         
         # if there is no improvement in dtrain or dvalid, stop learning
         model = lgb.train(
-                params, 
-                dtrain, 
+                _params, dtrain, 
                 valid_sets = [dtrain, dvalid], 
-                num_boost_rounds = 1000, 
-                verbose_eval = verbose_eval
+                num_boost_round = 1000, 
+                callbacks=[
+                    lgb.early_stopping(stopping_rounds=10, verbose=True), 
+                    lgb.log_evaluation(period=100)
+                ]
         )
         
         y_pred = model.predict(dvalid.get_data())
-        r2_score = r2_score(dvalid.get_label(), y_pred)
+        auc_score = roc_auc_score(dvalid.get_label(), y_pred)
         
-        scores.append(r2_score)
+        scores.append(auc_score)
         models.append(model)
     
     print(f"validation result: {np.mean(scores)}")
     return scores, models
 
-cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
-manual_cv_lgbreg(X, y, cv = cv)
-
 
 # %% baseline to use cv func. in lgb library
 def lgb_cv_lgvcls(X, y, params = {}, random_state = 42):
-    params = {
+    _params = {
         "objective"    : "binary", # or multiclass, 
         # "num_class"  : 3,  
         "boosting_type": "gbdt", 
-        "metric"       : "auc", # logloss, multi_logloss 
+        "metric"       : "binary_logloss", # logloss, multi_logloss 
         "random_state" : random_state, 
         "verbose"      : -1
-    }.update(params)
-    verbose_eval = 0
+    }
+    _params.update(params)
     
     cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
     cv_data = lgb.Dataset(X, label = y)
     
     cv_result = lgb.cv(
-        params, cv_data, 
+        _params, cv_data, 
         num_boost_rounds = 1000, 
-        early_stopping_rounds = 10, 
-        verbose_eval = verbose_eval, 
-        folds = cv
+        folds = cv, 
+        callbacks = [
+            lgb.early_stopping(stopping_rounds=10, verbose=True), 
+            lgb.log_evaluation(period=100)
+        ]
     )
-    print(f'RMSE mean = {cv_result["rmse-mean"][-1]}')
+    print(f'logloss mean = {cv_result["binary_logloss-mean"][-1]}')
     return cv_result
     
 # hyperparameter tuning in lightGBM
