@@ -2,7 +2,7 @@
 
 ## Preprocessing
 * sklearnを使用した欠損値補完についてはサイト[^4]を参照  
-* pipelineの活用に関してはサイト[^5]を参照
+* pipelineの活用に関してはサイト[^5][^6]を参照
 
 ## GBDT 
 
@@ -20,3 +20,5 @@
 [^4]: https://qiita.com/FukuharaYohei/items/9830d5760595619352a5
 
 [^5]: https://dev.classmethod.jp/articles/concatenate_result_with_featureunion/
+
+[^6]: https://scikit-learn.org/stable/modules/compose.html#feature-union
