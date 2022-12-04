@@ -116,18 +116,17 @@ def manual_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
 
 
 # %% baseline to use cv func. in lgb library
-def lgb_cv_lgbcls(X, y, params = {}, random_state = 42):
+def lgb_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
     _params = {
         "objective"    : "binary", # or multiclass, 
         # "num_class"  : 3,  
         "boosting_type": "gbdt", 
-        "metric"       : "binary_logloss", # logloss, multi_logloss 
+        "metrics"       : ["binary_logloss", "auc"], # multi_logloss 
         "random_state" : random_state, 
         "verbose"      : -1
     }
     _params.update(params)
     
-    cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
     cv_data = lgb.Dataset(X, label = y)
     
     cv_result = lgb.cv(
@@ -135,11 +134,14 @@ def lgb_cv_lgbcls(X, y, params = {}, random_state = 42):
         num_boost_round = 1000, 
         folds = cv, 
         callbacks = [
-            lgb.early_stopping(stopping_rounds=10, verbose=True), 
+            lgb.early_stopping(stopping_rounds=10, 
+                               first_metric_only = True, 
+                               verbose=True), 
             lgb.log_evaluation(period=100)
         ]
     )
     print(f'logloss mean = {cv_result["binary_logloss-mean"][-1]}')
+    print(f'auc mean = {cv_result["auc-mean"][-1]}')
     return cv_result
     
 # hyperparameter tuning in lightGBM
