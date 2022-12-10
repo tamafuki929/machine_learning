@@ -8,6 +8,10 @@ import sklearn
 import scipy.stats as st
 import itertools
 
+# %% plot correlation
+def corr(data):
+    sns.heatmap(data.corr(), annot = True, vmax = 1.0, vmin = -1., cmap = "coolwarm")
+
 # calculate cramer's V
 def cramer_v(x_cat, y_con):
     cross_tab = pd.crosstab(x_cat, y_con)
