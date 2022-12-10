@@ -1,3 +1,4 @@
+# %% initialize
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -10,8 +11,11 @@ def load_dataset(path):
     d_id = data.index
     return data, d_id
 
+
+# %% get dataset
 train, train_id = load_dataset("/kaggle/input/XXX/train.csv")
 test, test_id = load_dataset("/kaggle/input/XXX/test.csv")
 original_data = pd.concat([train, test])
 original_data["is_test"] = 0
 original_data.loc[test_id, "is_test"] = 1
+        
