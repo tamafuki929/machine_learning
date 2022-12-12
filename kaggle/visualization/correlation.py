@@ -13,8 +13,8 @@ def corr(data):
     sns.heatmap(data.corr(), annot = True, vmax = 1.0, vmin = -1., cmap = "coolwarm")
 
 # calculate cramer's V
-def cramer_v(x_cat, y_con):
-    cross_tab = pd.crosstab(x_cat, y_con)
+def cramer_v(x_cat, y_cat):
+    cross_tab = pd.crosstab(x_cat, y_cat)
     chi2, _, _, _ = st.chi2_contingency(cross_tab, False)
     n = cross_tab.sum().sum()
     r = np.sqrt(chi2 / (n * (np.min(cross_tab.shape) - 1)))

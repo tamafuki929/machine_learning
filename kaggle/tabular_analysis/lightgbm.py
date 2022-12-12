@@ -131,7 +131,7 @@ def manual_cv_lgbcls(X, y, cv, data_transformer, params = {}, random_state = 42)
     models = []
     for _, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
         if data_transformer:
-            processed_X, processed_y = data_transformer.fit_transform(X, y, X.iloc[train_id].index)
+            processed_X, processed_y = data_transformer.fit_transform(X, y, X.iloc[train_id].index, X.iloc[val_id].index)
         else:
             processed_X, processed_y = X, y
         dtrain = lgb.Dataset(processed_X.iloc[train_id], label = processed_y.iloc[train_id])
@@ -198,8 +198,8 @@ def models_feature_importance(models, columns, importance_type = "gain"):
     return fi_df.sort_values(by = "importance", ascending = False)
     
 # hyperparameter tuning in lightGBM
-def tuning_lightgbm(X, y, random_state = 42):
-    cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
+def tuning_lightgbm(X, y, data_transformer, random_state = 42):
+    cv = KFold(n_splits = 10, shuffle = True, random_state = 42)
     
     def objective(trial, X, y):
         params = {
@@ -213,7 +213,7 @@ def tuning_lightgbm(X, y, random_state = 42):
             "bagging_fraction": trial.suggest_float("bagging_fraction", 0.5, 1.0, step = 0.1),
             "feature_fraction": trial.suggest_float("feature_fraction", 0.2, 0.95, step=0.1)
         }
-        scores, models = manual_cv_lgbcls(X, y, cv = cv, params = params)
+        scores, models = manual_cv_lgbcls(X, y, cv, data_transformer, params = params)
         return np.mean(scores)
     
     study = optuna.create_study(

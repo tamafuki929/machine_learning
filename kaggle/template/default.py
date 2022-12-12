@@ -18,4 +18,14 @@ test, test_id = load_dataset("/kaggle/input/XXX/test.csv")
 original_data = pd.concat([train, test])
 original_data["is_test"] = 0
 original_data.loc[test_id, "is_test"] = 1
-        
+
+
+# %% submit
+def submit_res(X_test, models, aggregator):
+    y_pred = aggregator.predict(models, X_test)
+    y_pred = np.where(y_pred < 0.5, 0, 1)
+    submit = pd.DataFrame()
+    submit["PassengerId"] = X_test.index
+    submit["Survived"]    = y_pred
+    print(submit)
+    submit.to_csv("submission.csv", index = False)

@@ -25,3 +25,22 @@ def dist_cat_plot(data, columns, n_col = 3, hue = None, figsize = (15, 15)):
         sns.histplot(data = data, x = columns[i], hue = hue, stat = "probability", common_norm = False, ax=ax[i])
     # plt.tight_layout()
     plt.show()
+    
+    
+## plot binning result
+def binnin_plot(data, col, hue, nbins = 10):
+    processed_data = data.copy()
+    processed_data[col] = pd.qcut(processed_data[col], nbins, 
+                        labels = [i for i in range(nbins)])
+    sns.histplot(data = processed_data, x = col, 
+                 hue = hue, kde=True, stat="probability", common_norm = False)
+    
+# plot prediction distribution
+def plot_pred_dist(models, X_train, X_test):
+    y_pred_test = pd.DataFrame(pred_models(models, X_test), index = X_test.index, columns = ["pred"])
+    y_pred_train = pd.DataFrame(pred_models(models, X_train), index = X_train.index, columns = ["pred"])
+    y_pred_df = pd.concat([y_pred_test, y_pred_train])
+    y_pred_df["is_test"] = 0
+    y_pred_df.loc[y_pred_test.index, "is_test"] = 1
+    sns.histplot(data = y_pred_df, x = "pred", hue = "is_test", bins = np.arange(0, 1, 0.1), 
+                 stat = "proportion", common_norm = False)
