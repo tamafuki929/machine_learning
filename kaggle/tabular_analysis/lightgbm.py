@@ -3,50 +3,10 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import cross_val_predict, KFold, StratifiedKFold, train_test_split
-from sklearn.metrics import roc_auc_score, r2_score
+from sklearn.metrics import roc_auc_score, r2_score, accuracy_score
 from tqdm import tqdm
 import lightgbm as lgb
 import optuna
-
-# %% baseline to use sllearn or manual cv
-def manual_cv_lgbreg(X, y, cv, params = {}, random_state = 42):
-    _params = {
-        "objective"    : "regression",  
-        "boosting_type": "gbdt", 
-        "metric"       : "rmse", 
-        "random_state" : random_state, 
-        "verbose"      : -1
-    }
-    _params.update(params)
-    
-    scores = []
-    models = []
-    for _, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
-        dtrain = lgb.Dataset(X[train_id], label = y[train_id])
-        dvalid = lgb.Dataset(X[val_id]  , label = y[val_id], free_raw_data = False)
-        
-        # if there is no improvement in dtrain or dvalid, stop learning
-        model = lgb.train(
-                _params, dtrain, 
-                valid_sets = [dtrain, dvalid], 
-                num_boost_rounds = 1000, 
-                callbacks=[
-                    lgb.early_stopping(stopping_rounds=10, verbose=True), 
-                    lgb.log_evaluation(period=100)
-                ]
-        )
-        
-        y_pred = model.predict(dvalid.get_data())
-        r2_score = r2_score(dvalid.get_label(), y_pred)
-        
-        scores.append(r2_score)
-        models.append(model)
-    
-    print(f"validation result: {np.mean(scores)}")
-    return scores, models
-
-cv = KFold(n_splits = 5, shuffle = True, random_state = 42)
-manual_cv_lgbreg(X, y, cv = cv)
 
 
 # %% baseline to use cv func. in lgb library
@@ -114,78 +74,60 @@ def random_holdout_lgbcls(X, y, cv, params = {}, n_iter = 10, random_state = 42)
     return scores, models
 
 
-
-# %% baseline to use sllearn or manual cv
-def manual_cv_lgbcls(X, y, cv, data_transformer, params = {}, random_state = 42):
+# %% baseline to use cv func. in lgb library
+def manual_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
     _params = {
         "objective"    : "binary", # or multiclass, 
         # "num_class"  : 3, 
         "boosting_type": "gbdt", 
         "metrics"      : "binary_logloss", # multi_logloss
         "random_state" : random_state, 
+        "num_leaves"    : 20,
+        "min_data_in_leaf": 20, 
+        "learning_rate": 0.01, 
+        "lambda_l2": 10.,
+        # "is_unbalance": True,
         "verbose"      : -1
     }
     _params.update(params)
     
-    scores = []
+    scores = {
+        "roc_auc" : [], 
+        "accuracy": []
+    }
     models = []
-    for _, (train_id, val_id) in tqdm(enumerate(cv.split(X, y))):
-        if data_transformer:
-            processed_X, processed_y = data_transformer.fit_transform(X, y, X.iloc[train_id].index, X.iloc[val_id].index)
-        else:
-            processed_X, processed_y = X, y
-        dtrain = lgb.Dataset(processed_X.iloc[train_id], label = processed_y.iloc[train_id])
-        dvalid = lgb.Dataset(processed_X.iloc[val_id]  , label = processed_y.iloc[val_id], free_raw_data = False)
+    for _, (train_id, test_id) in tqdm(enumerate(cv.split(X, y))):
+        X_train, X_valid, y_train, y_valid = train_test_split(X.iloc[train_id], 
+                                                              y.iloc[train_id], 
+                                                              test_size = 0.1,
+                                                              random_state = random_state)
+        dtrain = lgb.Dataset(X_train, label = y_train)
+        dvalid = lgb.Dataset(X_valid, label = y_valid)
+        dtest = lgb.Dataset(X.iloc[test_id], label = y.iloc[test_id], free_raw_data = False)
         
         # if there is no improvement in dtrain or dvalid, execute early stopping
         model = lgb.train(
                 _params, dtrain, 
-                valid_sets = [dtrain, dvalid], 
+                valid_sets = [dvalid, dtest], 
                 num_boost_round = 1000, 
                 callbacks=[
-                    lgb.early_stopping(stopping_rounds=10, verbose=True), 
+                    lgb.early_stopping(stopping_rounds=10, first_metric_only = True, verbose=True), 
                     lgb.log_evaluation(period=100)
                 ]
         )
         
-        y_pred = model.predict(dvalid.get_data())
-        auc_score = roc_auc_score(dvalid.get_label(), y_pred)
+        y_pred = model.predict(dtest.get_data())
+        auc_score = roc_auc_score(dtest.get_label(), y_pred)
+        accuracy = accuracy_score(dtest.get_label(), np.where(y_pred < 0.5, 0, 1))
         
-        scores.append(auc_score)
+        scores["roc_auc"].append(auc_score)
+        scores["accuracy"].append(accuracy)
         models.append(model)
     
-    print(f"validation result: {np.mean(scores)}")
+    print("validation result (auc):", np.mean(scores["roc_auc"]))
+    print("validation result (acc):", np.mean(scores["accuracy"]))
     return scores, models
 
-
-# %% baseline to use cv func. in lgb library
-def lgb_cv_lgbcls(X, y, cv, params = {}, random_state = 42):
-    _params = {
-        "objective"    : "binary", # or multiclass, 
-        # "num_class"  : 3,  
-        "boosting_type": "gbdt", 
-        "metrics"       : ["binary_logloss", "auc"], # multi_logloss 
-        "random_state" : random_state, 
-        "verbose"      : -1
-    }
-    _params.update(params)
-    
-    cv_data = lgb.Dataset(X, label = y)
-    
-    cv_result = lgb.cv(
-        _params, cv_data, 
-        num_boost_round = 1000, 
-        folds = cv, 
-        callbacks = [
-            lgb.early_stopping(stopping_rounds=10, 
-                               first_metric_only = True, 
-                               verbose=True), 
-            lgb.log_evaluation(period=100)
-        ]
-    )
-    print(f'logloss mean = {cv_result["binary_logloss-mean"][-1]}')
-    print(f'auc mean = {cv_result["auc-mean"][-1]}')
-    return cv_result
 
 
 # get feature importance from multiple models
@@ -224,4 +166,13 @@ def tuning_lightgbm(X, y, data_transformer, random_state = 42):
     study.optimize(func, n_trials=500)
     
     return study
+
 # %%
+def pred_models(models, X, aggregator = None):
+    if aggregator is None:
+        y_pred = np.array([0.] * len(X))
+        for model in models:
+            y_pred += model.predict(X)
+        return y_pred / len(models)
+    else:
+        return aggregator.predict(models, X)

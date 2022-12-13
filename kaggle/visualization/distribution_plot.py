@@ -36,11 +36,26 @@ def binnin_plot(data, col, hue, nbins = 10):
                  hue = hue, kde=True, stat="probability", common_norm = False)
     
 # plot prediction distribution
-def plot_pred_dist(models, X_train, X_test):
-    y_pred_test = pd.DataFrame(pred_models(models, X_test), index = X_test.index, columns = ["pred"])
-    y_pred_train = pd.DataFrame(pred_models(models, X_train), index = X_train.index, columns = ["pred"])
+def plot_pred_dist(models, X_train, X_test, proba = True, aggregator = None, bins = np.arange(0, 1, 0.05)):
+    def pred_models(models, X, aggregator = None):
+        if aggregator is None:
+            y_pred = np.array([0.] * len(X))
+            for model in models:
+                y_pred += model.predict(X)
+            return y_pred / len(models)
+        else:
+            return aggregator.predict(models, X)
+    y_pred_test = pd.DataFrame(pred_models(models, X_test, aggregator), 
+                               index = X_test.index, columns = ["proba"])
+    y_pred_train = pd.DataFrame(pred_models(models, X_train, aggregator), 
+                                index = X_train.index, columns = ["proba"])
     y_pred_df = pd.concat([y_pred_test, y_pred_train])
+    y_pred_df["pred"] = (y_pred_df["proba"] > 0.5).astype(int)
     y_pred_df["is_test"] = 0
     y_pred_df.loc[y_pred_test.index, "is_test"] = 1
-    sns.histplot(data = y_pred_df, x = "pred", hue = "is_test", bins = np.arange(0, 1, 0.1), 
-                 stat = "proportion", common_norm = False)
+    if proba:
+        sns.histplot(data = y_pred_df, x = "proba", hue = "is_test", bins = bins, 
+                     stat = "proportion", common_norm = False)
+    else:
+        sns.histplot(data = y_pred_df, x = "pred", hue = "is_test", 
+                     stat = "proportion", common_norm = False)
