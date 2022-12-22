@@ -59,32 +59,33 @@ def corr_cat_vs_con(data, cat_cols, con_cols):
 def corr_mutual_matrix(df, random_state = 42):
     
     def cal_mutual_info(y_ser, x_ser = None, random_state = 42):
-        enc = LabelEncoder()
-        nan_index = list(set(x_ser.isna().index) | set(y_ser.isna().index))
-        y_ser = y_ser.drop(nan_index)
-        x_ser = x_ser.drop(nan_index)
         if x_ser is None:
             x_ser = y_ser.copy()
+        enc = LabelEncoder()
+        use_index = list(set(x_ser.dropna().index) & set(y_ser.dropna().index))
+        y_ser = y_ser.drop(use_index)
+        x_ser = x_ser.drop(use_index)
         if x_ser.dtype != np.number:
             x_ser = pd.Series(enc.fit_transform(x_ser))
-        if y_ser.dtype == np.number:
+        if y_ser.dtype != np.number:
+            y_ser = pd.Series(enc.fit_transform(y_ser))
+        if len(y_ser) == 0:
+            mi = 0.
+        else:
             mi = mutual_info_regression(x_ser.values.reshape(-1, 1), 
                                         y_ser.values, random_state=random_state)
-        else:
-            mi = mutual_info_classif(x_ser.astype(np.number).values.reshape(-1, 1), 
-                                     y_ser.values, random_state = random_state)
         return mi
         
     columns = df.columns
     corr = pd.DataFrame(np.identity(len(columns)), index = columns, columns = columns)
     for col in columns:
-        corr.loc[col, col] = cal_mutual_info(df[col])
+        corr.loc[col, col] = cal_mutual_info(df[col], random_state = random_state)
     for col1, col2 in itertools.combinations(columns, 2):
-        corr.loc[col1, col2] = 2 * cal_mutual_info(col1, col2) / (corr.loc[col1, col1] + corr.loc[col2, col2])
+        corr.loc[col1, col2] = 2 * cal_mutual_info(col1, col2, random_state) / (corr.loc[col1, col1] + corr.loc[col2, col2])
     corr += corr.T - np.diag(np.diag(corr))
     for col in columns:
         corr.loc[col, col] = 1.
-    return pd.DataFrame(corr, index = columns, columns = columns)
+    return corr
 
 def feature_selection_mutual_info(df, th = 0.9, random_state = 42):
     while True:
