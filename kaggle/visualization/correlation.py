@@ -8,7 +8,7 @@ import sklearn
 import scipy.stats as st
 import itertools
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
-
+from sklearn.preprocessing import LabelEncoder
 # %% plot correlation
 def corr(data):
     sns.heatmap(data.corr(), annot = True, vmax = 1.0, vmin = -1., cmap = "coolwarm")
@@ -57,31 +57,30 @@ def corr_cat_vs_con(data, cat_cols, con_cols):
 
 
 def corr_mutual_matrix(df, random_state = 42):
-    con_cols = df.select_dtypes(include = np.number).columns.to_list()
-    cat_cols = df.select_dtypes(exclude = np.number).columns.to_list()
-    columns = con_cols + cat_cols
+    
+    def cal_mutual_info(y_ser, x_ser = None, random_state = 42):
+        enc = LabelEncoder()
+        nan_index = list(set(x_ser.isna().index) | set(y_ser.isna().index))
+        y_ser = y_ser.drop(nan_index)
+        x_ser = x_ser.drop(nan_index)
+        if x_ser is None:
+            x_ser = y_ser.copy()
+        if x_ser.dtype != np.number:
+            x_ser = pd.Series(enc.fit_transform(x_ser))
+        if y_ser.dtype == np.number:
+            mi = mutual_info_regression(x_ser.values.reshape(-1, 1), 
+                                        y_ser.values, random_state=random_state)
+        else:
+            mi = mutual_info_classif(x_ser.astype(np.number).values.reshape(-1, 1), 
+                                     y_ser.values, random_state = random_state)
+        return mi
+        
+    columns = df.columns
     corr = pd.DataFrame(np.identity(len(columns)), index = columns, columns = columns)
     for col in columns:
-        target_df = df[col].dropna()
-        if target_df.dtype == np.number:
-            mi = mutual_info_regression(target_df.values.reshape(-1, 1), 
-                                        target_df.values, random_state=random_state)
-        else:
-            mi = mutual_info_classif(target_df.astype(np.number).values.reshape(-1, 1), 
-                                     target_df.values, random_state = random_state)
-        corr.loc[col, col] = mi
-    for cols in itertools.combinations(columns, 2):
-        target_df = df[list(cols)].dropna()
-        if target_df.iloc[:, 1].dtype == np.number:
-            mi = mutual_info_regression(target_df[cols[0]].values.reshape(-1, 1), 
-                                        target_df[cols[1]].values, 
-                                        random_state=random_state)
-        else:
-            mi = mutual_info_classif(target_df[cols[0]].astype(np.number).values.reshape(-1, 1), 
-                                     target_df[cols[1]].values, 
-                                     random_state = random_state)
-            corr.loc[cols[0], cols[1]] = 2 * mi
-            corr.loc[cols[0], cols[1]] /= corr.loc[cols[0], cols[0]] + corr.loc[cols[1], cols[1]]
+        corr.loc[col, col] = cal_mutual_info(df[col])
+    for col1, col2 in itertools.combinations(columns, 2):
+        corr.loc[col1, col2] = 2 * cal_mutual_info(col1, col2) / (corr.loc[col1, col1] + corr.loc[col2, col2])
     corr += corr.T - np.diag(np.diag(corr))
     for col in columns:
         corr.loc[col, col] = 1.
